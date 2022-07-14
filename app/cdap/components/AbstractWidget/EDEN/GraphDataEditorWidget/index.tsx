@@ -17,6 +17,7 @@ import { objectQuery } from 'services/helpers';
 import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import DataMappingWidget from '../DataMappingWidget';
 import DeleteIcon from '@material-ui/icons/Delete';
+import cloneDeep from 'lodash/cloneDeep';
 
 const styles = (theme): StyleRules => {
   return {
@@ -51,9 +52,10 @@ const styles = (theme): StyleRules => {
 
 interface IGraphDataEditorWidgetProps extends IWidgetProps<any>, WithStyles<typeof styles> {
   graphManagementApi?: string;
+  value: string;
 }
 
-const GraphListProperties = ({ type, data, vertexs, edges, inputSchema, classes }) => {
+const GraphListProperties = ({ type, data, vertexs, edges, inputSchema, classes, onChange }) => {
   const [properties, setProperties] = useState([]);
 
   useEffect(() => {
@@ -61,29 +63,33 @@ const GraphListProperties = ({ type, data, vertexs, edges, inputSchema, classes 
   }, [data]);
 
   const addProperties = () => {
-    setProperties([
+    const data = [
       ...properties,
       {
         label: '',
         id: '',
-        isHardCodedLabel: true,
+        hardCodedLabel: true,
         fromLabel: '',
         toLabel: '',
         properties: [],
       },
-    ]);
+    ];
+    setProperties(data);
+    onChange(data);
   };
 
   const handleChangeItem = (value, index) => {
     const data = [...properties];
     data.splice(index, 1, value);
     setProperties(data);
+    onChange(data);
   };
 
   const handleDeleteItem = (index) => {
     const data = [...properties];
     data.splice(index, 1);
     setProperties(data);
+    onChange(data);
   };
 
   return (
@@ -128,18 +134,16 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
   const [item, setItem] = useState({
     label: '',
     id: '',
-    isHardCodedLabel: true,
+    hardCodedLabel: true,
     fromLabel: '',
     toLabel: '',
     properties: [],
-    propertiesString: '',
   });
   const [availableProperties, setAvailableProperties] = useState([]);
 
   useEffect(() => {
     const item = {
       ...property,
-      propertiesString: '',
     };
     setItem(item);
   }, [property]);
@@ -149,7 +153,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
       ...item,
       [field]: value,
     };
-    if (field === 'label' || field === 'isHardCodedLabel') {
+    if (field === 'label' || field === 'hardCodedLabel') {
       data.properties = [];
     }
     setItem(data);
@@ -165,18 +169,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
   };
 
   const handleChangeProperties = (value) => {
-    console.log('value', value);
-
-    // handleChangeItem('propertiesString', value);
-
-    // const array = value.split(',').map((i) => {
-    //   const keyvalue = i.split(':');
-    //   return {
-    //     label: keyvalue[0],
-    //     value: keyvalue[1],
-    //   };
-    // });
-    // handleChangeItem('properties', array);
+    handleChangeItem('properties', value);
   };
 
   return (
@@ -186,8 +179,8 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
           <FormControlLabel
             control={
               <Checkbox
-                checked={item.isHardCodedLabel}
-                onChange={(event) => handleChangeItem('isHardCodedLabel', event.target.checked)}
+                checked={item.hardCodedLabel}
+                onChange={(event) => handleChangeItem('hardCodedLabel', event.target.checked)}
               />
             }
             label="Is hardcoded label?"
@@ -199,10 +192,10 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>Vertex</label>
-        {item.isHardCodedLabel ? (
+        {item.hardCodedLabel ? (
           <Input
             className={classes.input}
-            placeholder="Select vertex"
+            placeholder="Vertex Label"
             onChange={(event) => handleChangeItem('label', event.target.value)}
             value={item.label}
           />
@@ -241,10 +234,10 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
       <div className={classes.formGroup}>
         <label className={classes.label}>Properties</label>
         <DataMappingWidget
-          value={item.propertiesString}
+          value={item.properties}
           inputDropdownOptions={inputSchema}
           outputDropdownOptions={availableProperties}
-          hasOutput={!item.isHardCodedLabel}
+          hasOutput={!item.hardCodedLabel}
           onChange={handleChangeProperties}
         />
       </div>
@@ -256,18 +249,16 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
   const [item, setItem] = useState({
     label: '',
     id: '',
-    isHardCodedLabel: true,
+    hardCodedLabel: true,
     fromLabel: '',
     toLabel: '',
     properties: [],
-    propertiesString: '',
   });
   const [availableProperties, setAvailableProperties] = useState([]);
 
   useEffect(() => {
     const item = {
       ...property,
-      propertiesString: '',
     };
     setItem(item);
   }, [property]);
@@ -290,18 +281,7 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
   };
 
   const handleChangeProperties = (value) => {
-    console.log('value', value);
-
-    // handleChangeItem('propertiesString', value);
-
-    // const array = value.split(',').map((i) => {
-    //   const keyvalue = i.split(':');
-    //   return {
-    //     label: keyvalue[0],
-    //     value: keyvalue[1],
-    //   };
-    // });
-    // handleChangeItem('properties', array);
+    handleChangeItem('properties', value);
   };
 
   return (
@@ -311,8 +291,8 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
           <FormControlLabel
             control={
               <Checkbox
-                checked={item.isHardCodedLabel}
-                onChange={(event) => handleChangeItem('isHardCodedLabel', event.target.checked)}
+                checked={item.hardCodedLabel}
+                onChange={(event) => handleChangeItem('hardCodedLabel', event.target.checked)}
               />
             }
             label="Is hardcoded label?"
@@ -324,10 +304,10 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>Edge</label>
-        {item.isHardCodedLabel ? (
+        {item.hardCodedLabel ? (
           <Input
             className={classes.input}
-            placeholder="Select vertex"
+            placeholder="Edge Label"
             onChange={(event) => handleChangeItem('label', event.target.value)}
             value={item.label}
           />
@@ -365,43 +345,61 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>From Vertex</label>
-        <Select
-          className={classes.input}
-          value={item.fromLabel}
-          onChange={(event) => handleChangeItem('fromLabel', event.target.value)}
-        >
-          {vertexs.map((option) => {
-            return (
-              <MenuItem value={option.value} key={option.value}>
-                {option.label}
-              </MenuItem>
-            );
-          })}
-        </Select>
+        {item.hardCodedLabel ? (
+          <Input
+            className={classes.input}
+            placeholder="From Vertex"
+            onChange={(event) => handleChangeItem('fromLabel', event.target.value)}
+            value={item.fromLabel}
+          />
+        ) : (
+          <Select
+            className={classes.input}
+            value={item.fromLabel}
+            onChange={(event) => handleChangeItem('fromLabel', event.target.value)}
+          >
+            {vertexs.map((option) => {
+              return (
+                <MenuItem value={option.value} key={option.value}>
+                  {option.label}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        )}
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>To Vertex</label>
-        <Select
-          className={classes.input}
-          value={item.toLabel}
-          onChange={(event) => handleChangeItem('toLabel', event.target.value)}
-        >
-          {vertexs.map((option) => {
-            return (
-              <MenuItem value={option.value} key={option.value}>
-                {option.label}
-              </MenuItem>
-            );
-          })}
-        </Select>
+        {item.hardCodedLabel ? (
+          <Input
+            className={classes.input}
+            placeholder="From Vertex"
+            onChange={(event) => handleChangeItem('toLabel', event.target.value)}
+            value={item.toLabel}
+          />
+        ) : (
+          <Select
+            className={classes.input}
+            value={item.toLabel}
+            onChange={(event) => handleChangeItem('toLabel', event.target.value)}
+          >
+            {vertexs.map((option) => {
+              return (
+                <MenuItem value={option.value} key={option.value}>
+                  {option.label}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        )}
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>Properties</label>
         <DataMappingWidget
-          value={item.propertiesString}
+          value={item.properties}
           inputDropdownOptions={inputSchema}
           outputDropdownOptions={availableProperties}
-          hasOutput={!item.isHardCodedLabel}
+          hasOutput={!item.hardCodedLabel}
           onChange={handleChangeProperties}
         />
       </div>
@@ -424,6 +422,43 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
 
   useEffect(() => {
     fetchListAttributes();
+    const data = JSON.parse(value);
+    if (data) {
+      setListVertexs(
+        data.NODE_LIST?.map((i) => {
+          const hardCodedLabel = i.hardCodedLabel || true;
+          return {
+            label: i.label || '',
+            id: i.id || '',
+            hardCodedLabel,
+            fromLabel: i.fromLabel || '',
+            toLabel: i.toLabel || '',
+            properties:
+              i.properties?.map((j) => ({
+                key: hardCodedLabel ? j : j?.key || '',
+                value: hardCodedLabel ? '' : j?.value || '',
+              })) || [],
+          };
+        }) || []
+      );
+      setListEdges(
+        data.EDGE_LIST?.map((i) => {
+          const hardCodedLabel = i.hardCodedLabel || true;
+          return {
+            label: i.label || '',
+            id: i.id || '',
+            hardCodedLabel,
+            fromLabel: i.fromLabel || '',
+            toLabel: i.toLabel || '',
+            properties:
+              i.properties?.map((j) => ({
+                key: hardCodedLabel ? j : j?.key || '',
+                value: hardCodedLabel ? '' : j?.value || '',
+              })) || [],
+          };
+        }) || []
+      );
+    }
   }, []);
 
   function getFields(schemas: IStageSchema[]) {
@@ -474,11 +509,42 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
       });
   };
 
+  const handleChange = (type, list) => {
+    const data = {
+      NODE_LIST: cloneDeep(listVertexs),
+      EDGE_LIST: cloneDeep(listEdges),
+    };
+    switch (type) {
+      case 'vertex':
+        setListVertexs(list);
+        data.NODE_LIST = cloneDeep(list);
+        break;
+      case 'edge':
+        setListEdges(list);
+        data.EDGE_LIST = cloneDeep(list);
+        break;
+    }
+    data.NODE_LIST.map((i) => {
+      if (i.hardCodedLabel) {
+        i.properties = i.properties.map((j) => j.key);
+      }
+      return i;
+    });
+    data.EDGE_LIST.map((i) => {
+      if (i.hardCodedLabel) {
+        i.properties = i.properties.map((j) => j.key);
+      }
+      return i;
+    });
+    onChange(JSON.stringify(data));
+  };
+
   return (
     <div className={classes.container}>
       <GraphListProperties
         type="vertex"
         data={listVertexs}
+        onChange={(data) => handleChange('vertex', data)}
         vertexs={vertexOptions}
         edges={edgeOptions}
         inputSchema={inputSchema}
@@ -487,6 +553,7 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
       <GraphListProperties
         type="edge"
         data={listEdges}
+        onChange={(data) => handleChange('edge', data)}
         vertexs={vertexOptions}
         edges={edgeOptions}
         inputSchema={inputSchema}

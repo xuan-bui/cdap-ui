@@ -65,11 +65,11 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
   };
 
   public componentDidMount() {
-    const [key = '', value = ''] = this.props.value.split(this.props.kvDelimiter);
+    // const [key = '', value = ''] = this.props.value.split(this.props.kvDelimiter);
 
     this.setState({
-      key,
-      value,
+      key: this.props.value.key,
+      value: this.props.value.value,
     });
   }
 
@@ -82,8 +82,13 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
         const key = this.state.key;
         const value = this.state.value;
 
-        const updatedValue = key.length > 0 ? [key, value].join(this.props.kvDelimiter) : '';
-        this.onChange(updatedValue);
+        // const updatedValue = key.length > 0 ? [key, value].join(this.props.kvDelimiter) : '';
+        // this.onChange(updatedValue);
+
+        this.onChange({
+          key,
+          value,
+        });
       }
     );
   };

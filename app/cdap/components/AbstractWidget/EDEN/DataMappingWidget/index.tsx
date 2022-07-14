@@ -8,9 +8,8 @@ import AbstractMultiRowWidget, {
 import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import { objectQuery } from 'services/helpers';
-import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
-import { IStageSchema } from '../..';
 import DataMappingRow, { IDropdownOption } from './DataMappingRow';
+import uuidV4 from 'uuid/v4';
 
 interface IDataMappingWidgetProps extends IMultiRowWidgetProps {
   'key-placeholder'?: string;
@@ -30,6 +29,49 @@ interface IDataMappingProps extends IMultiRowProps<IDataMappingWidgetProps> {
 }
 
 class DataMappingWidgetView extends AbstractMultiRowWidget<IDataMappingProps> {
+  public deconstructValues = (props) => {
+    if (!props.value || props.value.length === 0) {
+      return [];
+    }
+    // const delimiter = objectQuery(props, 'widgetProps', 'delimiter') || ',';
+
+    return props.value;
+  };
+
+  public constructValues = (): any => {
+    const values = this.state.rows
+      .filter((id) => this.values[id])
+      .map((id) => this.values[id].value);
+
+    return values;
+  };
+
+  public addRow = (index = -1, shouldFocus: boolean = true) => {
+    const rows = this.state.rows.slice();
+    const id = uuidV4();
+    rows.splice(index + 1, 0, id);
+
+    this.values[id] = {
+      ref: React.createRef(),
+      value: {
+        key: '',
+        value: '',
+      },
+    };
+
+    this.setState(
+      {
+        rows,
+        autofocus: shouldFocus ? id : null,
+      },
+      () => {
+        if (shouldFocus) {
+          this.onChange();
+        }
+      }
+    );
+  };
+
   public renderRow = (id, index) => {
     const keyPlaceholder = objectQuery(this.props, 'widgetProps', 'key-placeholder');
     const kvDelimiter = objectQuery(this.props, 'widgetProps', 'kv-delimiter');
