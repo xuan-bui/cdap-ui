@@ -1,0 +1,30 @@
+{
+  "name": "ace-builds",
+  "description": "Ace (Ajax.org Cloud9 Editor)",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "ignore": [
+    "demo"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajaxorg/ace-builds.git"
+  },
+  "author": "",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/ajaxorg/ace-builds/issues"
+  },
+  "homepage": "https://github.com/ajaxorg/ace-builds",
+  "version": "1.6.0",
+  "_release": "1.6.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.6.0",
+    "commit": "04a54d589aab3d646f0dc18f09d624e3934ae11b"
+  },
+  "_source": "https://github.com/ajaxorg/ace-builds.git",
+  "_target": "^1",
+  "_originalSource": "ace-builds"
+}

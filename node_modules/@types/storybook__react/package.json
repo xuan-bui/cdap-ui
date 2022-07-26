@@ -1,0 +1,30 @@
+{
+    "name": "@types/storybook__react",
+    "version": "3.0.9",
+    "description": "TypeScript definitions for @storybook/react",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Joscha Feth",
+            "url": "https://github.com/joscha",
+            "githubUsername": "joscha"
+        },
+        {
+            "name": "Anton Izmailov",
+            "url": "https://github.com/wapgear",
+            "githubUsername": "wapgear"
+        }
+    ],
+    "main": "",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/react": "*",
+        "@types/webpack-env": "*"
+    },
+    "typesPublisherContentHash": "f5c738b5b35205a5844f32507853f04e3c8e0c6dac8feefefef1bc9ab68628ba",
+    "typeScriptVersion": "2.8"
+}
