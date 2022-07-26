@@ -55,8 +55,8 @@ import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
 import MultiStageSelector from 'components/AbstractWidget/MultiStageSelector';
 import { objectQuery } from 'services/helpers';
-import DataMappingWidget from './EDEN/DataMappingWidget';
-import GraphPropertyWidget from './EDEN/GraphPropertyWidget';
+
+// custom for EDEN graph data editor
 import GraphDataEditorWidget from './EDEN/GraphDataEditorWidget';
 
 function Textarea(props) {
@@ -185,9 +185,7 @@ export const WIDGET_FACTORY = {
   // Wrangler
   'wrangler-directives': WranglerEditor,
 
-  // EDEN
-  'data-mapping': DataMappingWidget,
-  'graph-property': GraphPropertyWidget,
+  // custom for EDEN graph data editor
   'graph-data-editor': GraphDataEditorWidget,
 };
 

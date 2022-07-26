@@ -6,7 +6,6 @@ import AbstractMultiRowWidget, {
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
 
 import ThemeWrapper from 'components/ThemeWrapper';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import { objectQuery } from 'services/helpers';
 import DataMappingRow, { IDropdownOption } from './DataMappingRow';
 import uuidV4 from 'uuid/v4';
@@ -110,16 +109,3 @@ export default function DataMappingWidget(props) {
     </ThemeWrapper>
   );
 }
-
-(DataMappingWidget as any).propTypes = WIDGET_PROPTYPES;
-(DataMappingWidget as any).getWidgetAttributes = () => {
-  return {
-    'key-placeholder': { type: 'string', required: false },
-    'kv-delimiter': { type: 'string', required: false },
-    delimiter: { type: 'string', required: false },
-    showDelimiter: { type: 'boolean', required: false },
-    inputDropdownOptions: { type: 'array', required: false },
-    outputDropdownOptions: { type: 'array', required: false },
-    hasOutput: { type: 'boolean', required: false },
-  };
-};
