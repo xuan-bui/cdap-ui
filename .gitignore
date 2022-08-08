@@ -2,8 +2,8 @@
 *.iml
 npm-debug.log
 node/
-# node_modules/
-# bower_components/
+node_modules/
+bower_components/
 dist/
 cdap_dist/
 login_dist/

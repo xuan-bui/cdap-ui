@@ -3,16 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
-import {
-  Button,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
-  IconButton,
-  Input,
-  MenuItem,
-  Select,
-} from '@material-ui/core';
+import { Button, IconButton, MenuItem, Select } from '@material-ui/core';
 import { objectQuery } from 'services/helpers';
 import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import DataMappingWidget from '../DataMappingWidget';
@@ -41,6 +32,12 @@ const styles = (theme): StyleRules => {
     formGroup: {
       marginBottom: '15px',
     },
+    formRow: {
+      display: 'grid',
+      gridGap: '10px',
+      gridTemplateColumns: '50% 50%',
+      width: 'calc(100% - 10px)',
+    },
     label: {
       display: 'block',
     },
@@ -67,8 +64,7 @@ const GraphListProperties = ({ type, data, vertexs, edges, inputSchema, classes,
       ...properties,
       {
         label: '',
-        id: '',
-        hardCodedLabel: true,
+        ids: [],
         fromLabel: '',
         toLabel: '',
         properties: [],
@@ -133,8 +129,7 @@ const GraphListProperties = ({ type, data, vertexs, edges, inputSchema, classes,
 const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, deleteItem }) => {
   const [item, setItem] = useState({
     label: '',
-    id: '',
-    hardCodedLabel: true,
+    ids: [],
     fromLabel: '',
     toLabel: '',
     properties: [],
@@ -146,14 +141,21 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
       ...property,
     };
     setItem(item);
-  }, [property]);
+
+    if (item.label) {
+      const vertex = vertexs.find((i) => i.value === item.label);
+      if (vertex) {
+        setAvailableProperties(vertex.properties);
+      }
+    }
+  }, [property, vertexs]);
 
   const handleChangeItem = (field, value) => {
     const data = {
       ...item,
       [field]: value,
     };
-    if (field === 'label' || field === 'hardCodedLabel') {
+    if (field === 'label') {
       data.properties = [];
     }
     setItem(data);
@@ -172,64 +174,43 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
     handleChangeItem('properties', value);
   };
 
+  const handleChangeIds = (value) => {
+    handleChangeItem('ids', value);
+  };
+
   return (
     <div className={classes.propertyContainer}>
       <div className={classes.title}>
-        <FormGroup>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={item.hardCodedLabel}
-                onChange={(event) => handleChangeItem('hardCodedLabel', event.target.checked)}
-              />
-            }
-            label="Is hardcoded label?"
-          />
-        </FormGroup>
+        <label>Vertex</label>
         <IconButton color="secondary" onClick={deleteItem} data-cy="remove-row">
           <DeleteIcon fontSize="small" />
         </IconButton>
       </div>
       <div className={classes.formGroup}>
-        <label className={classes.label}>Vertex</label>
-        {item.hardCodedLabel ? (
-          <Input
-            className={classes.input}
-            placeholder="Vertex Label"
-            onChange={(event) => handleChangeItem('label', event.target.value)}
-            value={item.label}
-          />
-        ) : (
-          <Select
-            className={classes.input}
-            value={item.label}
-            onChange={(event) => handleChangeItem('label', event.target.value)}
-          >
-            {vertexs.map((option) => {
-              return (
-                <MenuItem value={option.value} key={option.value}>
-                  {option.label}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        )}
-      </div>
-      <div className={classes.formGroup}>
-        <label className={classes.label}>ID</label>
+        <label className={classes.label}>Label</label>
         <Select
           className={classes.input}
-          value={item.id}
-          onChange={(event) => handleChangeItem('id', event.target.value)}
+          value={item.label}
+          onChange={(event) => handleChangeItem('label', event.target.value)}
         >
-          {inputSchema.map((option) => {
+          {vertexs.map((option) => {
             return (
-              <MenuItem value={option} key={option}>
-                {option}
+              <MenuItem value={option.value} key={option.value}>
+                {option.label}
               </MenuItem>
             );
           })}
         </Select>
+      </div>
+      <div className={classes.formGroup}>
+        <label className={classes.label}>ID</label>
+        <DataMappingWidget
+          value={item.ids}
+          inputDropdownOptions={inputSchema}
+          outputDropdownOptions={availableProperties}
+          hasOutput={true}
+          onChange={handleChangeIds}
+        />
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>Properties</label>
@@ -237,7 +218,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
           value={item.properties}
           inputDropdownOptions={inputSchema}
           outputDropdownOptions={availableProperties}
-          hasOutput={!item.hardCodedLabel}
+          hasOutput={true}
           onChange={handleChangeProperties}
         />
       </div>
@@ -248,8 +229,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
 const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem, deleteItem }) => {
   const [item, setItem] = useState({
     label: '',
-    id: '',
-    hardCodedLabel: true,
+    ids: [],
     fromLabel: '',
     toLabel: '',
     properties: [],
@@ -261,7 +241,14 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
       ...property,
     };
     setItem(item);
-  }, [property]);
+
+    if (item.label) {
+      const edge = edges.find((i) => i.value === item.label);
+      if (edge) {
+        setAvailableProperties(edge.properties);
+      }
+    }
+  }, [property, edges]);
 
   const handleChangeItem = (field, value) => {
     const data = {
@@ -287,57 +274,22 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
   return (
     <div className={classes.propertyContainer}>
       <div className={classes.title}>
-        <FormGroup>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={item.hardCodedLabel}
-                onChange={(event) => handleChangeItem('hardCodedLabel', event.target.checked)}
-              />
-            }
-            label="Is hardcoded label?"
-          />
-        </FormGroup>
+        <label>Edge</label>
         <IconButton color="secondary" onClick={deleteItem} data-cy="remove-row">
           <DeleteIcon fontSize="small" />
         </IconButton>
       </div>
       <div className={classes.formGroup}>
-        <label className={classes.label}>Edge</label>
-        {item.hardCodedLabel ? (
-          <Input
-            className={classes.input}
-            placeholder="Edge Label"
-            onChange={(event) => handleChangeItem('label', event.target.value)}
-            value={item.label}
-          />
-        ) : (
-          <Select
-            className={classes.input}
-            value={item.label}
-            onChange={(event) => handleChangeItem('label', event.target.value)}
-          >
-            {edges.map((option) => {
-              return (
-                <MenuItem value={option.value} key={option.value}>
-                  {option.label}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        )}
-      </div>
-      <div className={classes.formGroup}>
-        <label className={classes.label}>ID</label>
+        <label className={classes.label}>Label</label>
         <Select
           className={classes.input}
-          value={item.id}
-          onChange={(event) => handleChangeItem('id', event.target.value)}
+          value={item.label}
+          onChange={(event) => handleChangeItem('label', event.target.value)}
         >
-          {inputSchema.map((option) => {
+          {edges.map((option) => {
             return (
-              <MenuItem value={option} key={option}>
-                {option}
+              <MenuItem value={option.value} key={option.value}>
+                {option.label}
               </MenuItem>
             );
           })}
@@ -345,53 +297,35 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>From Vertex</label>
-        {item.hardCodedLabel ? (
-          <Input
-            className={classes.input}
-            placeholder="From Vertex"
-            onChange={(event) => handleChangeItem('fromLabel', event.target.value)}
-            value={item.fromLabel}
-          />
-        ) : (
-          <Select
-            className={classes.input}
-            value={item.fromLabel}
-            onChange={(event) => handleChangeItem('fromLabel', event.target.value)}
-          >
-            {vertexs.map((option) => {
-              return (
-                <MenuItem value={option.value} key={option.value}>
-                  {option.label}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        )}
+        <Select
+          className={classes.input}
+          value={item.fromLabel}
+          onChange={(event) => handleChangeItem('fromLabel', event.target.value)}
+        >
+          {vertexs.map((option) => {
+            return (
+              <MenuItem value={option.value} key={option.value}>
+                {option.label}
+              </MenuItem>
+            );
+          })}
+        </Select>
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>To Vertex</label>
-        {item.hardCodedLabel ? (
-          <Input
-            className={classes.input}
-            placeholder="From Vertex"
-            onChange={(event) => handleChangeItem('toLabel', event.target.value)}
-            value={item.toLabel}
-          />
-        ) : (
-          <Select
-            className={classes.input}
-            value={item.toLabel}
-            onChange={(event) => handleChangeItem('toLabel', event.target.value)}
-          >
-            {vertexs.map((option) => {
-              return (
-                <MenuItem value={option.value} key={option.value}>
-                  {option.label}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        )}
+        <Select
+          className={classes.input}
+          value={item.toLabel}
+          onChange={(event) => handleChangeItem('toLabel', event.target.value)}
+        >
+          {vertexs.map((option) => {
+            return (
+              <MenuItem value={option.value} key={option.value}>
+                {option.label}
+              </MenuItem>
+            );
+          })}
+        </Select>
       </div>
       <div className={classes.formGroup}>
         <label className={classes.label}>Properties</label>
@@ -399,7 +333,7 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
           value={item.properties}
           inputDropdownOptions={inputSchema}
           outputDropdownOptions={availableProperties}
-          hasOutput={!item.hardCodedLabel}
+          hasOutput={true}
           onChange={handleChangeProperties}
         />
       </div>
@@ -426,35 +360,43 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
     if (data) {
       setListVertexs(
         data.NODE_LIST?.map((i) => {
-          const hardCodedLabel = i.hardCodedLabel || true;
+          const properties = [];
+          for (const key in i.properties) {
+            if (Object.prototype.hasOwnProperty.call(i.properties, key)) {
+              const value = i.properties[key];
+              properties.push({ key, value });
+            }
+          }
+          const ids = [];
+          for (const key in i.id) {
+            if (Object.prototype.hasOwnProperty.call(i.id, key)) {
+              const value = i.id[key];
+              ids.push({ key, value });
+            }
+          }
           return {
             label: i.label || '',
-            id: i.id || '',
-            hardCodedLabel,
             fromLabel: i.fromLabel || '',
             toLabel: i.toLabel || '',
-            properties:
-              i.properties?.map((j) => ({
-                key: hardCodedLabel ? j : j?.key || '',
-                value: hardCodedLabel ? '' : j?.value || '',
-              })) || [],
+            ids,
+            properties,
           };
         }) || []
       );
       setListEdges(
         data.EDGE_LIST?.map((i) => {
-          const hardCodedLabel = i.hardCodedLabel || true;
+          const properties = [];
+          for (const key in i.properties) {
+            if (Object.prototype.hasOwnProperty.call(i.properties, key)) {
+              const value = i.properties[key];
+              properties.push({ key, value });
+            }
+          }
           return {
             label: i.label || '',
-            id: i.id || '',
-            hardCodedLabel,
             fromLabel: i.fromLabel || '',
             toLabel: i.toLabel || '',
-            properties:
-              i.properties?.map((j) => ({
-                key: hardCodedLabel ? j : j?.key || '',
-                value: hardCodedLabel ? '' : j?.value || '',
-              })) || [],
+            properties,
           };
         }) || []
       );
@@ -480,13 +422,6 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
     }
     return fields;
   }
-
-  const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const v = event.target.value;
-    if (typeof onChange === 'function') {
-      onChange(v);
-    }
-  };
 
   const fetchListAttributes = () => {
     fetch(widgetProps.graphManagementApi)
@@ -524,17 +459,32 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
         data.EDGE_LIST = cloneDeep(list);
         break;
     }
-    data.NODE_LIST.map((i) => {
-      if (i.hardCodedLabel) {
-        i.properties = i.properties.map((j) => j.key);
-      }
-      return i;
+    data.NODE_LIST = data.NODE_LIST.map((i) => {
+      const properties = {};
+      i.properties.map((j) => {
+        properties[j.key] = j.value;
+      });
+      const id = {};
+      i.ids.map((j) => {
+        id[j.key] = j.value;
+      });
+      return {
+        label: i.label,
+        id,
+        properties,
+      };
     });
-    data.EDGE_LIST.map((i) => {
-      if (i.hardCodedLabel) {
-        i.properties = i.properties.map((j) => j.key);
-      }
-      return i;
+    data.EDGE_LIST = data.EDGE_LIST.map((i) => {
+      const properties = {};
+      i.properties.map((j) => {
+        properties[j.key] = j.value;
+      });
+      return {
+        label: i.label,
+        fromLabel: i.fromLabel,
+        toLabel: i.toLabel,
+        properties,
+      };
     });
     onChange(JSON.stringify(data));
   };

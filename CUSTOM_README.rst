@@ -16,4 +16,4 @@ Build
 
 Deploy
 ------------
-- Copy /packaged folder into CDAP Sanbox /ui folder
+- Copy /packaged/public folder into CDAP Sanbox /ui/public folder
