@@ -206,8 +206,8 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
         <label className={classes.label}>ID</label>
         <DataMappingWidget
           value={item.ids}
-          inputDropdownOptions={inputSchema}
-          outputDropdownOptions={availableProperties}
+          inputDropdownOptions={availableProperties}
+          outputDropdownOptions={inputSchema}
           hasOutput={true}
           onChange={handleChangeIds}
         />
@@ -216,8 +216,8 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
         <label className={classes.label}>Properties</label>
         <DataMappingWidget
           value={item.properties}
-          inputDropdownOptions={inputSchema}
-          outputDropdownOptions={availableProperties}
+          inputDropdownOptions={availableProperties}
+          outputDropdownOptions={inputSchema}
           hasOutput={true}
           onChange={handleChangeProperties}
         />
@@ -331,8 +331,8 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
         <label className={classes.label}>Properties</label>
         <DataMappingWidget
           value={item.properties}
-          inputDropdownOptions={inputSchema}
-          outputDropdownOptions={availableProperties}
+          inputDropdownOptions={availableProperties}
+          outputDropdownOptions={inputSchema}
           hasOutput={true}
           onChange={handleChangeProperties}
         />
