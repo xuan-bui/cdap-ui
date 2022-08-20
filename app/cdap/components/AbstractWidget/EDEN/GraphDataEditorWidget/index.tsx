@@ -135,6 +135,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
     properties: [],
   });
   const [availableProperties, setAvailableProperties] = useState([]);
+  const [availableIndexes, setAvailableIndexes] = useState([]);
 
   useEffect(() => {
     const item = {
@@ -146,7 +147,14 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
       const vertex = vertexs.find((i) => i.value === item.label);
       if (vertex) {
         setAvailableProperties(vertex.properties);
+        setAvailableIndexes(vertex.indexes);
+      } else {
+        setAvailableProperties([]);
+        setAvailableIndexes([]);
       }
+    } else {
+      setAvailableProperties([]);
+      setAvailableIndexes([]);
     }
   }, [property, vertexs]);
 
@@ -157,6 +165,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
     };
     if (field === 'label') {
       data.properties = [];
+      data.ids = [];
     }
     setItem(data);
     changeItem(data);
@@ -166,6 +175,7 @@ const GraphVertex = ({ property, classes, vertexs, inputSchema, changeItem, dele
 
       if (vertex) {
         setAvailableProperties(vertex.properties);
+        setAvailableIndexes(vertex.indexes);
       }
     }
   };
@@ -246,7 +256,11 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
       const edge = edges.find((i) => i.value === item.label);
       if (edge) {
         setAvailableProperties(edge.properties);
+      } else {
+        setAvailableProperties([]);
       }
+    } else {
+      setAvailableProperties([]);
     }
   }, [property, edges]);
 
@@ -255,6 +269,9 @@ const GraphEdge = ({ property, classes, vertexs, edges, inputSchema, changeItem,
       ...item,
       [field]: value,
     };
+    if (field === 'label') {
+      data.properties = [];
+    }
     setItem(data);
     changeItem(data);
 
@@ -352,10 +369,11 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
   const [edgeOptions, setEdgeOptions] = useState([]);
   const [listVertexs, setListVertexs] = useState([]);
   const [listEdges, setListEdges] = useState([]);
+  const [selectedSchema, setSelectedSchema] = useState('');
+  const [listGraphSchemas, setListGraphSchemas] = useState([]);
   const inputSchema = getFields(objectQuery(extraConfig, 'inputSchema') || []);
 
   useEffect(() => {
-    fetchListAttributes();
     const data = JSON.parse(value);
     if (data) {
       setListVertexs(
@@ -401,6 +419,7 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
         }) || []
       );
     }
+    fetchListAttributes(data.GRAPH_SOURCE_NAME || '');
   }, []);
 
   function getFields(schemas: IStageSchema[]) {
@@ -423,40 +442,64 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
     return fields;
   }
 
-  const fetchListAttributes = () => {
-    fetch(widgetProps.graphManagementApi)
-      .then((response) => response.json())
-      .then((data) => {
-        setVertexOptions(
-          data.vertexlabels.map((i) => ({
-            label: i.name,
-            value: i.name,
-            properties: i.properties || [],
-          }))
-        );
-        setEdgeOptions(
-          data.edgelabels.map((i) => ({
-            label: i.name,
-            value: i.name,
-            properties: i.properties || [],
-          }))
-        );
-      });
-  };
+  function fetchListAttributes(graphSourceName: string) {
+    if (widgetProps.graphManagementApi) {
+      fetch(widgetProps.graphManagementApi)
+        .then((response) => response.json())
+        .then((data) => {
+          setListGraphSchemas(data);
+          if (graphSourceName) {
+            selectGraphSchema(data, graphSourceName, false);
+          }
+        });
+    }
+  }
 
-  const handleChange = (type, list) => {
+  function selectGraphSchema(listGraphSchemas: any[], schemaName: string, syncChanges = true) {
+    setSelectedSchema(schemaName);
+    const existedSchema = listGraphSchemas.find((i) => i.schemaName === schemaName);
+    if (existedSchema) {
+      setVertexOptions(
+        existedSchema.vertexLabels.map((i) => ({
+          label: i.vertexLabelName,
+          value: i.vertexLabelName,
+          properties: i.vertexLabelPropertyKeys?.map((j) => j.propertyName) || [],
+          indexes: i.vertexIndices?.map((j) => j.vertexIndexName) || [],
+        }))
+      );
+      setEdgeOptions(
+        existedSchema.edgeLabels.map((i) => ({
+          label: i.edgeLabelName,
+          value: i.edgeLabelName,
+          properties: i.edgeLabelPropertyKeys?.map((j) => j.propertyName) || [],
+        }))
+      );
+    } else {
+      setVertexOptions([]);
+      setEdgeOptions([]);
+    }
+    if (syncChanges) {
+      handleChange('schema', schemaName);
+    }
+  }
+
+  function handleChange(type, value) {
     const data = {
+      GRAPH_SOURCE_NAME: selectedSchema,
       NODE_LIST: cloneDeep(listVertexs),
       EDGE_LIST: cloneDeep(listEdges),
     };
     switch (type) {
+      case 'schema':
+        data.GRAPH_SOURCE_NAME = value;
+        break;
       case 'vertex':
-        setListVertexs(list);
-        data.NODE_LIST = cloneDeep(list);
+        setListVertexs(value);
+        data.NODE_LIST = cloneDeep(value);
         break;
       case 'edge':
-        setListEdges(list);
-        data.EDGE_LIST = cloneDeep(list);
+        setListEdges(value);
+        data.EDGE_LIST = cloneDeep(value);
         break;
     }
     data.NODE_LIST = data.NODE_LIST.map((i) => {
@@ -487,29 +530,50 @@ const GraphDataEditorWidgetView: React.FC<IGraphDataEditorWidgetProps> = ({
       };
     });
     onChange(JSON.stringify(data));
-  };
+  }
 
   return (
-    <div className={classes.container}>
-      <GraphListProperties
-        type="vertex"
-        data={listVertexs}
-        onChange={(data) => handleChange('vertex', data)}
-        vertexs={vertexOptions}
-        edges={edgeOptions}
-        inputSchema={inputSchema}
-        classes={classes}
-      />
-      <GraphListProperties
-        type="edge"
-        data={listEdges}
-        onChange={(data) => handleChange('edge', data)}
-        vertexs={vertexOptions}
-        edges={edgeOptions}
-        inputSchema={inputSchema}
-        classes={classes}
-      />
-    </div>
+    <>
+      <div className={classes.formGroup}>
+        <label className={classes.label}>Graph source</label>
+        <Select
+          className={classes.input}
+          value={selectedSchema}
+          onChange={(event) => selectGraphSchema(listGraphSchemas, `${event.target.value}`)}
+        >
+          {listGraphSchemas.map((option) => {
+            return (
+              <MenuItem value={option.schemaName} key={option.schemaName}>
+                {option.schemaName}
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </div>
+
+      {selectedSchema && (
+        <div className={classes.container}>
+          <GraphListProperties
+            type="vertex"
+            data={listVertexs}
+            onChange={(data) => handleChange('vertex', data)}
+            vertexs={vertexOptions}
+            edges={edgeOptions}
+            inputSchema={inputSchema}
+            classes={classes}
+          />
+          <GraphListProperties
+            type="edge"
+            data={listEdges}
+            onChange={(data) => handleChange('edge', data)}
+            vertexs={vertexOptions}
+            edges={edgeOptions}
+            inputSchema={inputSchema}
+            classes={classes}
+          />
+        </div>
+      )}
+    </>
   );
 };
 
